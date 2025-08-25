@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Money Tracker Online</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Chart.js for analysis -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+  <!-- Auth screens -->
+  <div id="auth" class="auth-wrap">
+    <div class="auth-card">
+      <div class="tabs">
+        <button id="tabLogin" class="active">Login</button>
+        <button id="tabSignup">Sign up</button>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <h2>Login</h2>
+        <label>Email
+          <input type="text" id="loginEmail" required />
+        </label>
+        <label>Password
+          <input type="password" id="loginPassword" />
+        </label>
+        <button type="submit">Login</button>
+      </form>
+
+      <form id="signupForm" class="auth-form hidden">
+        <h2>Create account</h2>
+        <label>Name
+          <input type="text" id="signupName" required />
+        </label>
+        <label>Email
+          <input type="email" id="signupEmail" required />
+        </label>
+        <label>Password
+          <input type="password" id="signupPassword" required />
+        </label>
+        <button type="submit">Sign up</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-item" data-page="records" onclick="showPage('records', this)">
+        <i class="fa fa-list"></i><span>Records</span>
+      </div>
+      <div class="sidebar-item" data-page="analysis" onclick="showPage('analysis', this)">
+        <i class="fa fa-chart-pie"></i><span>Analysis</span>
+      </div>
+      <div class="sidebar-item" data-page="budgets" onclick="showPage('budgets', this)">
+        <i class="fa fa-wallet"></i><span>Budgets</span>
+      </div>
+      <div class="sidebar-item" data-page="accounts" onclick="showPage('accounts', this)">
+        <i class="fa fa-university"></i><span>Accounts</span>
+      </div>
+      <div class="sidebar-item" data-page="categories" onclick="showPage('categories', this)">
+        <i class="fa fa-tags"></i><span>Categories</span>
+      </div>
+      <div class="sidebar-item" data-page="settings" onclick="showPage('settings', this)">
+        <i class="fa fa-gear"></i><span>Settings</span>
+      </div>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-item danger" onclick="logout()">
+        <i class="fa fa-right-from-bracket"></i><span>Logout</span>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header>
+        <div class="brand">
+          <button id="homeBtn" class="icon-btn"><i class="fa fa-money-bill"></i></button>
+
+          <h1>Money Tracker Online</h1>
+        </div>
+
+        <div class="header-right">
+          <div class="search-wrap">
+            <input id="searchInput" type="search" placeholder="Search notes, category, account" />
+            <i class="fa fa-search"></i>
+          </div>
+        </div>
+      </header>
+      <div class="date-filter">
+        <button id="prevPeriod" class="arrow-btn" title="Previous"><i class="fa fa-chevron-left"></i></button>
+
+        <div class="dropdown">
+          <button id="periodBtn" class="dropbtn">Monthly</button>
+          <div id="periodMenu" class="dropdown-content">
+            <button data-g="daily">Daily</button>
+            <button data-g="weekly">Weekly</button>
+            <button data-g="monthly">Monthly</button>
+            <button data-g="3m">3 Months</button>
+            <button data-g="6m">6 Months</button>
+            <button data-g="9m">9 Months</button>
+            <button data-g="yearly">Yearly</button>
+          </div>
+        </div>
+
+        <span id="currentPeriodLabel" class="period-label">August 2025</span>
+
+        <button id="nextPeriod" class="arrow-btn" title="Next"><i class="fa fa-chevron-right"></i></button>
+      </div>
+      <main>
+        <!-- Records -->
+        <section id="records" class="page active">
+          <div class="records-head">
+            <button id="addRecordBtn" class="primary"><i class="fa fa-plus"></i></button>
+            <button id="importBtn"><i class="fa fa-file-import"></i> </button>
+            <input id="importFile" type="file" accept=".json" class="hidden">
+          </div>
+          <div id="records-list" class="container_records"></div>
+        </section>
+
+        <!-- Analysis -->
+        <section id="analysis" class="page">
+          <div class="grid2">
+            <div class="card">
+              <h3>Expenses Overview</h3>
+              <div class="grid2tight">
+                <canvas id="expensesChart"></canvas>
+                <div id="expensesLegend" class="legend"></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Income Overview</h3>
+              <canvas id="incomeChart"></canvas>
+            </div>
+          </div>
+
+          <div class="grid3">
+            <div class="card">
+              <h3>Expense Flow</h3>
+              <canvas id="expenseFlowChart"></canvas>
+            </div>
+            <div class="card">
+              <h3>Income Flow</h3>
+              <canvas id="incomeFlowChart"></canvas>
+            </div>
+            <div class="card">
+              <h3>Account Analysis</h3>
+              <canvas id="accountChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Budgets -->
+        <section id="budgets" class="page">
+          <div class="card">
+            <h3>Add budget</h3>
+            <div class="row">
+              <select id="budgetCategory"></select>
+              <input type="number" id="budgetAmount" placeholder="Amount" />
+              <button id="addBudgetBtn" class="primary">Add</button>
+            </div>
+          </div>
+          <div id="budgets-list" class="list"></div>
+        </section>
+
+        <!-- Accounts -->
+        <section id="accounts" class="page">
+          <div class="card">
+            <h3>Account</h3>
+            <div class="row">
+              <input type="text" id="accountName" placeholder="Account name" />
+              <input type="color" id="accountColor" value="#2ecc71" />
+              <select id="accountIcon">
+                <option value="fa-wallet">Wallet</option>
+                <option value="fa-money-bill">Cash</option>
+                <option value="fa-building-columns">Bank</option>
+                <option value="fa-piggy-bank">Savings</option>
+                <option value="fa-credit-card">Card</option>
+              </select>
+              <button id="addAccountBtn" class="primary">Add</button>
+            </div>
+          </div>
+          <div id="accounts-list" class="list cards"></div>
+        </section>
+
+        <!-- Categories -->
+        <section id="categories" class="page">
+          <div class="card">
+            <h3>Add category</h3>
+            <div class="row">
+              <input type="text" id="categoryName" placeholder="Category name" />
+              <select id="categoryType">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+              <input type="color" id="categoryColor" value="#3498db" />
+              <select id="categoryIcon">
+                <option value="fa-burger">Food</option>
+                <option value="fa-bus">Transport</option>
+                <option value="fa-school">School</option>
+                <option value="fa-tv">Subscription</option>
+                <option value="fa-sack-dollar">Allowance</option>
+                <option value="fa-briefcase">Commission</option>
+                <option value="fa-bowl-food">Groceries</option>
+                <option value="fa-film">Entertainment</option>
+              </select>
+              <button id="addCategoryBtn" class="primary">Add</button>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div>
+              <h3>Expense Categories</h3>
+              <div id="expense-categories" class="list chips"></div>
+            </div>
+            <div>
+              <h3>Income Categories</h3>
+              <div id="income-categories" class="list chips"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Settings -->
+        <section id="settings" class="page">
+          <div class="grid3">
+            <div class="card">
+              <h3>Appearance</h3>
+              <div class="row">
+                <button id="lightBtn">Light</button>
+                <button id="darkBtn">Dark</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Management</h3>
+              <div class="col gap">
+                <button id="exportExcelBtn"><i class="fa fa-file-excel"></i> Export to Excel</button>
+                <button id="backupBtn"><i class="fa fa-download"></i> Backup Data</button>
+                <label class="btn">
+                  <i class="fa fa-upload"></i> Restore
+                  <input id="restoreFile" type="file" accept=".json" class="hidden">
+                </label>
+                <button id="deleteBtn" class="danger"><i class="fa fa-trash"></i> Delete account data</button>
+                <button id="resetBtn" class="danger"><i class="fa fa-broom"></i> Reset sample data</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Application</h3>
+              <div class="col gap">
+                <button id="likeBtn"><i class="fa fa-thumbs-up"></i> Like</button>
+                <button id="helpBtn"><i class="fa fa-circle-question"></i> Help (FAQ)</button>
+                <button id="feedbackBtn"><i class="fa fa-comment-dots"></i> Feedback</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add/Edit Record Modal -->
+  <div id="recordModal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="recordModalTitle">Add record</h3>
+      <label>Date
+        <input type="date" id="recordDate">
+      </label>
+      <label>Type
+        <select id="recordType">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </label>
+      <label>Category
+        <select id="recordCategory"></select>
+      </label>
+      <label>Account
+        <select id="recordAccount"></select>
+      </label>
+      <label>Amount
+        <input type="number" id="recordAmount" step="0.01">
+      </label>
+      <label>Note
+        <input type="text" id="recordNote" maxlength="120">
+      </label>
+      <div class="modal-actions">
+        <button id="saveRecordBtn" class="primary">Save</button>
+        <button onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
